@@ -12,7 +12,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const PLAYERO_WON = 'PLAYERO_WON';
     const TIE = 'TIE';
 
-
     /*
         Indexes within the board
         [0] [1] [2]
@@ -53,15 +52,136 @@ window.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!board.includes(''))
+        if (!board.includes('')) {
             announce(TIE);
-    if (!board.includes('')) {
-        announce(TIE);
-        isGameActive = false;
-        return;
+            isGameActive = false;
+            return;
+        }
+        
+        if (currentPlayer === 'X') {
+            currentPlayer = 'O';
+            playerDisplay.innerText = currentPlayer;
+            aiAction();
+        } else {
+            currentPlayer = 'X';
+            playerDisplay.innerText = currentPlayer;
+        }
     }
 
+    const announce = (type) => {
+        switch(type){
+            case PLAYERO_WON:
+                announcer.innerHTML = 'Player <span class="playerO">O</span> Won';
+                break;
+            case PLAYERX_WON:
+                announcer.innerHTML = 'Player <span class="playerX">X</span> Won';
+                break;
+            case TIE:
+                announcer.innerText = 'Tie';
+        }
+        announcer.classList.remove('hide');
+    };
+
+    const isValidAction = (tile) => {
+        if (tile.innerText === 'X' || tile.innerText === 'O'){
+            return false;
+        }
+
+        return true;
+    };
+
+    const updateBoard =  (index) => {
+        board[index] = currentPlayer;
+    }
+
+    const changePlayer = () => {
+        playerDisplay.classList.remove(`player${currentPlayer}`);
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        playerDisplay.innerText = currentPlayer;
+const getComputerMove = (board, computerPlayer) => {
+    const opponentPlayer = computerPlayer === 'X' ? 'O' : 'X';
+
+    // Check if computer can win in the next move
+    for (let i = 0; i < winningConditions.length; i++) {
+        const winCondition = winningConditions[i];
+        const a = board[winCondition[0]];
+        const b = board[winCondition[1]];
+        const c = board[winCondition[2]];
+
+        if (a === computerPlayer && a === b && !c) {
+            return winCondition[2];
+        }
+        if (a === computerPlayer && a === c && !b) {
+            return winCondition[1];
+        }
+        if (b === computerPlayer && b === c && !a) {
+            return winCondition[0];
+        }
+    }
+
+    // Check if opponent can win in the next move
+    for (let i = 0; i < winningConditions.length; i++) {
+        const winCondition = winningConditions[i];
+        const a = board[winCondition[0]];
+        const b = board[winCondition[1]];
+        const c = board[winCondition[2]];
+
+        if (a === opponentPlayer && a === b && !c) {
+            return winCondition[2];
+        }
+        if (a === opponentPlayer && a === c && !b) {
+            return winCondition[1];
+        }
+        if (b === opponentPlayer && b === c && !a) {
+            return winCondition[0];
+        }
+    }
+
+    // Choose a corner if available
+    const corners = [0, 2, 6, 8];
+    const availableCorners = corners.filter(index => board[index] === '');
+    if (availableCorners.length > 0) {
+        const randomIndex = Math.floor(Math.random() * availableCorners.length);
+        return availableCorners[randomIndex];
+    }
+
+    // Choose center if available
+    if (board[4] === '') {
+        return 4;
+    }
+
+    // Choose a random available spot
+    const availableSpots = board.reduce((acc, curr, index) => {
+        if (curr === '') {
+            acc.push(index);
+        }
+        return acc;
+    }, []);
+    const randomIndex = Math.floor(Math.random() * availableSpots.length);
+    return availableSpots[randomIndex];
+};
+
+const computerAction = () => {
+    const index = getComputerMove(board, currentPlayer);
+    const tile = tiles[index];
+    tile.innerText = currentPlayer;
+    tile.classList.add(`player${currentPlayer}`);
+    updateBoard(index);
+    handleResultValidation();
     changePlayer();
+};
+
+const userAction = (tile, index) => {
+    if(isValidAction(tile) && isGameActive) {
+        tile.innerText = currentPlayer;
+        tile.classList.add(`player${currentPlayer}`);
+        updateBoard(index);
+        handleResultValidation();
+        changePlayer();
+        if (isGameActive) {
+            computerAction();
+        }
+    }
 };
 
 const resetBoard = () => {
@@ -70,7 +190,7 @@ const resetBoard = () => {
     announcer.classList.add('hide');
 
     if (currentPlayer === 'O') {
-        changePlayer();
+        computerAction();
     }
 
     tiles.forEach(tile => {
@@ -78,38 +198,11 @@ const resetBoard = () => {
         tile.classList.remove('playerX');
         tile.classList.remove('playerO');
     });
-
-    // If AI is the next player, make a move
-    if (currentPlayer === 'O') {
-        makeAIMove();
-    }
-}
-
-const makeAIMove = () => {
-    // Generate a random move
-    let availableMoves = [];
-    for (let i = 0; i < board.length; i++) {
-        if (board[i] === '') {
-            availableMoves.push(i);
-        }
-    }
-    let aiMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
-
-    // Make the move
-    tiles[aiMove].innerText = currentPlayer;
-    tiles[aiMove].classList.add(`player${currentPlayer}`);
-    updateBoard(aiMove);
-    handleResultValidation();
 };
 
-tiles.forEach( (tile, index) => {
+tiles.forEach((tile, index) => {
     tile.addEventListener('click', () => userAction(tile, index));
 });
 
 resetButton.addEventListener('click', resetBoard);
-
-// If AI is the first player, make a move
-if (currentPlayer === 'O') {
-    makeAIMove();
-}
 });
