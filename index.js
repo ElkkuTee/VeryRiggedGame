@@ -99,7 +99,7 @@ window.addEventListener('DOMContentLoaded', () => {
             changePlayer();
         }
     }
-    
+
     const resetBoard = () => {
         board = ['', '', '', '', '', '', '', '', ''];
         isGameActive = true;
