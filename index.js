@@ -47,78 +47,69 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-    if (roundWon) {
+        if (roundWon) {
             announce(currentPlayer === 'X' ? PLAYERX_WON : PLAYERO_WON);
             isGameActive = false;
             return;
         }
 
-    if (!board.includes(''))
+        if (!board.includes(''))
+            announce(TIE);
+    if (!board.includes('')) {
         announce(TIE);
+        isGameActive = false;
+        return;
     }
 
-    const announce = (type) => {
-        switch(type){
-            case PLAYERO_WON:
-                announcer.innerHTML = 'Player <span class="playerO">O</span> Won';
-                break;
-            case PLAYERX_WON:
-                announcer.innerHTML = 'Player <span class="playerX">X</span> Won';
-                break;
-            case TIE:
-                announcer.innerText = 'Tie';
-        }
-        announcer.classList.remove('hide');
-    };
+    changePlayer();
+};
 
-    const isValidAction = (tile) => {
-        if (tile.innerText === 'X' || tile.innerText === 'O'){
-            return false;
-        }
+const resetBoard = () => {
+    board = ['', '', '', '', '', '', '', '', ''];
+    isGameActive = true;
+    announcer.classList.add('hide');
 
-        return true;
-    };
-
-    const updateBoard =  (index) => {
-        board[index] = currentPlayer;
+    if (currentPlayer === 'O') {
+        changePlayer();
     }
 
-    const changePlayer = () => {
-        playerDisplay.classList.remove(`player${currentPlayer}`);
-        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-        playerDisplay.innerText = currentPlayer;
-        playerDisplay.classList.add(`player${currentPlayer}`);
-    }
-
-    const userAction = (tile, index) => {
-        if(isValidAction(tile) && isGameActive) {
-            tile.innerText = currentPlayer;
-            tile.classList.add(`player${currentPlayer}`);
-            updateBoard(index);
-            handleResultValidation();
-            changePlayer();
-        }
-    }
-    
-    const resetBoard = () => {
-        board = ['', '', '', '', '', '', '', '', ''];
-        isGameActive = true;
-        announcer.classList.add('hide');
-
-        if (currentPlayer === 'O') {
-            changePlayer();
-        }
-
-        tiles.forEach(tile => {
-            tile.innerText = '';
-            tile.classList.remove('playerX');
-            tile.classList.remove('playerO');
-        });
-    }
-
-    tiles.forEach( (tile, index) => {
-        tile.addEventListener('click', () => userAction(tile, index));
+    tiles.forEach(tile => {
+        tile.innerText = '';
+        tile.classList.remove('playerX');
+        tile.classList.remove('playerO');
     });
 
-    resetButton.addEventListener('click', resetBoard);
+    // If AI is the next player, make a move
+    if (currentPlayer === 'O') {
+        makeAIMove();
+    }
+}
+
+const makeAIMove = () => {
+    // Generate a random move
+    let availableMoves = [];
+    for (let i = 0; i < board.length; i++) {
+        if (board[i] === '') {
+            availableMoves.push(i);
+        }
+    }
+    let aiMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+
+    // Make the move
+    tiles[aiMove].innerText = currentPlayer;
+    tiles[aiMove].classList.add(`player${currentPlayer}`);
+    updateBoard(aiMove);
+    handleResultValidation();
+};
+
+tiles.forEach( (tile, index) => {
+    tile.addEventListener('click', () => userAction(tile, index));
+});
+
+resetButton.addEventListener('click', resetBoard);
+
+// If AI is the first player, make a move
+if (currentPlayer === 'O') {
+    makeAIMove();
+}
 });
